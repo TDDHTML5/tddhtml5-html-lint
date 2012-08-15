@@ -1,5 +1,7 @@
 /*global desc, task, jake, fail, complete, namespace */
 
+var config = require(__dirname + '/config');
+
 (function() {
   'use strict';
 
@@ -7,23 +9,27 @@
 
   desc('Lint our layouts, views, and templates');
   task('lint', function() {
+    var lintConfig = config.html.lint;
+    
+    var severityArray = ['STRUCTURE', 'HELPER', 'FLUFF'];
+    var severityIndex = typeof lintConfig.severity === 'undefined' ? 2 : lintConfig.severity;
+
+    //default to the strictest linting
+    var severity = severityArray[ severityIndex ];
+    
+    //get the correct files for linting
     var files = new jake.FileList();
-    //including all 3 lines below may be overkill,
-    //  but it helps illustrate some options
-    files.include('index.html');
-    files.include('src/*.html');
-    files.include('src/**/*.html');
-    //don't lint our tests
-    files.exclude('test');
+    files.include(lintConfig.files.src);
+    files.exclude(lintConfig.files.exclude);
     
-    var fileNames = files.toArray();
-    var perlLintCmds = [ 'perl ./html_lint.pl ' + fileNames.join(' ') ];
-    
+    var fileNames = files.toArray().join(' ');
+    var perlLintCmds = [ 'perl ./html_lint.pl ' + severity + ' ' + fileNames];
+
     var exec = jake.createExec(perlLintCmds, { stdout: true });
     
     exec.addListener('cmdEnd', function() {
       //since we only execute 1 command we don't need to count the number
-      //  of commands to determine when we're done.
+      //  of commands to determine when we're done.  just finish.
       complete();
     });
     
