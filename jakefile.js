@@ -22,26 +22,29 @@ var config = require(__dirname + '/config');
     files.include(lintConfig.files.src);
     files.exclude(lintConfig.files.exclude);
     
-    var fileNames = files.toArray().join(' ');
-    var perlLintCmds = [ 'perl ./html_lint.pl ' + severity + ' ' + fileNames];
+    var fileNames = files.toArray();
 
-    var exec = jake.createExec(perlLintCmds, { stdout: true });
-    
-    exec.addListener('cmdEnd', function() {
-      //since we only execute 1 command we don't need to count the number
-      //  of commands to determine when we're done.  just finish.
-      complete();
-    });
-    
-    exec.addListener('error', function(msg, code) {
-      //just add a blank space to make the output more readable
-      console.log('');
-      //fail the Jake test
-      fail(msg, code);
-      complete();
-    });
-    
-    exec.run();
+    for(var i = 0, l = fileNames.length; i < l; i++) {
+      var exec = jake.createExec([ 'perl ./html_lint.pl ' + severity + ' ' + fileNames[i]], {
+        stdout: true
+      });
+
+      exec.addListener('cmdEnd', function() {
+        //since we only execute 1 command we don't need to count the number
+        //  of commands to determine when we're done.  just finish.
+        complete();
+      });
+
+      exec.addListener('error', function(msg, code) {
+        //just add a blank space to make the output more readable
+        console.log('');
+        //fail the Jake test
+        fail(msg, code);
+        complete();
+      });
+
+      exec.run();
+    }
     
   }, {async: true});
 }());
